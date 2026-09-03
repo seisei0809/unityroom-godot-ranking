@@ -9,7 +9,6 @@ Godot から unityroom のランキングAPIへスコアを送信するための
 - Godot 4.6.3 で開発・確認
 - GDScript
 - Web書き出し
-- MIT License
 
 ## 主な機能
 
