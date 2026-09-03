@@ -1,0 +1,64 @@
+[gd_scene format=3 uid="uid://c06sqjopqxjwe"]
+
+[ext_resource type="Script" uid="uid://boo1n32l2pubu" path="res://demo/scripts/demo_controller.gd" id="1_demo"]
+[ext_resource type="PackedScene" path="res://addons/seisei/unityroom_godot_ranking/unityroom_ranking_client.tscn" id="2_client"]
+
+[node name="Main" type="Control" unique_id=825290056]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_demo")
+
+[node name="UnityroomRankingClient" parent="." unique_id=6122371 instance=ExtResource("2_client")]
+
+[node name="VBox" type="VBoxContainer" parent="." unique_id=2107795217]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -110.0
+offset_right = 160.0
+offset_bottom = 110.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="VBox" unique_id=951479310]
+layout_mode = 2
+text = "unityroom ランキング送信デモ"
+horizontal_alignment = 1
+
+[node name="ScoreboardIdLabel" type="Label" parent="VBox" unique_id=1307229176]
+layout_mode = 2
+text = "ランキングID"
+
+[node name="ScoreboardIdInput" type="SpinBox" parent="VBox" unique_id=1464624670]
+layout_mode = 2
+min_value = 1.0
+max_value = 1000.0
+value = 1.0
+allow_greater = true
+
+[node name="ScoreLabel" type="Label" parent="VBox" unique_id=1103264627]
+layout_mode = 2
+text = "スコア"
+
+[node name="ScoreInput" type="LineEdit" parent="VBox" unique_id=2031503993]
+layout_mode = 2
+text = "100"
+
+[node name="SendButton" type="Button" parent="VBox" unique_id=494834301]
+layout_mode = 2
+text = "送信"
+
+[node name="ResultLabel" type="Label" parent="VBox" unique_id=2062880101]
+layout_mode = 2
+text = "結果"
+horizontal_alignment = 1
+autowrap_mode = 2

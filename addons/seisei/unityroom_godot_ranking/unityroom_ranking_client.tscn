@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://addons/seisei/unityroom_godot_ranking/unityroom_ranking_client.gd" id="1_client"]
+
+[node name="UnityroomRankingClient" type="Node"]
+script = ExtResource("1_client")

@@ -1,0 +1,6 @@
+* text=auto eol=lf
+
+# Asset Libraryから取得する場合はSDK本体だけを含める
+/**        export-ignore
+/addons    !export-ignore
+/addons/** !export-ignore
