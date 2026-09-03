@@ -213,12 +213,6 @@ unityroom-godot-ranking/
 
 SDK本体は `addons/seisei/unityroom_godot_ranking/` の中だけです。
 
-## 注意
-
-- ランキングAPIへの送信はWeb書き出しで使用してください。
-- HMAC認証用キーを公開リポジトリへコミットしないでください。
-- スコアを毎フレーム送信しないでください。
-
 ## License
 
 MIT License
