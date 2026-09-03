@@ -3,6 +3,14 @@ extends Node
 
 const API_ORIGIN := "https://unityroom.com"
 const SCORE_PATH := "/gameplay_api/v1/scoreboards/%d/scores"
+const SCORE_SEND_INTERVAL := 6.0
+
+class ScoreRequest:
+	extends RefCounted
+
+	signal completed(response: UnityroomRankingResponse)
+
+	var score := 0.0
 
 @export_group("unityroom設定")
 # unityroomで発行したHMAC認証用キー
@@ -15,8 +23,10 @@ const SCORE_PATH := "/gameplay_api/v1/scoreboards/%d/scores"
 # スコア送信完了時に通知
 signal score_sent(response: UnityroomRankingResponse)
 
-# 現在スコア送信中か
-var is_sending := false
+# ランキングごとの送信待ちQueue
+var score_queues := {}
+# 現在Queue処理中のランキング
+var processing_scoreboards := {}
 
 func send_score(
 	scoreboard_id: int,
@@ -49,53 +59,55 @@ func send_score(
 			)
 		)
 
-	# 同時送信は行わない
-	if is_sending:
-		return finish_request(
-			UnityroomRankingResponse.create_error(
-				"busy",
-				"別のスコアを送信中です。送信完了後にもう一度お試しください。"
-			)
-		)
+	# 送信Requestを生成
+	var request := ScoreRequest.new()
+	request.score = score
 
-	# 送信中状態にする
-	is_sending = true
+	# このランキングのQueueが無ければ作成
+	if not score_queues.has(scoreboard_id):
+		score_queues[scoreboard_id] = []
 
-	# スコア送信
-	var response := await send_score_once(
-		scoreboard_id,
-		score
-	)
+	# Queueへ追加
+	score_queues[scoreboard_id].append(request)
 
-	# 送信中状態を解除
-	is_sending = false
+	# このランキングのQueue処理がまだなら開始
+	if not processing_scoreboards.has(scoreboard_id):
+		process_score_queue(scoreboard_id)
+
+	# 自分の送信完了まで待つ
+	var response: UnityroomRankingResponse = await request.completed
 
 	return finish_request(response)
 
-func send_scores(
-	scores: Dictionary
-) -> Dictionary:
-	# ランキングごとの送信結果
-	var responses := {}
+func process_score_queue(
+	scoreboard_id: int
+) -> void:
+	# このランキングを処理中にする
+	processing_scoreboards[scoreboard_id] = true
 
-	# 指定されたスコアを順番に送信
-	for scoreboard_key in scores:
-		# ランキングID
-		var scoreboard_id := int(
-			scoreboard_key
-		)
-		# スコア
-		var score := float(
-			scores[scoreboard_key]
-		)
+	# Queueが空になるまで順番に送信
+	while not score_queues[scoreboard_id].is_empty():
+		# 先頭Requestを取得
+		var request: ScoreRequest = score_queues[scoreboard_id].pop_front()
 
 		# スコア送信
-		responses[scoreboard_id] = await send_score(
+		var response := await send_score_once(
 			scoreboard_id,
-			score
+			request.score
 		)
 
-	return responses
+		# 呼び出し元へ送信結果を返す
+		request.completed.emit(response)
+
+		# 同じランキングへの次回送信まで間隔を空ける
+		await get_tree().create_timer(
+			SCORE_SEND_INTERVAL
+		).timeout
+
+	# 空になったQueueを削除
+	score_queues.erase(scoreboard_id)
+	# 処理中状態を解除
+	processing_scoreboards.erase(scoreboard_id)
 
 func send_score_once(
 	scoreboard_id: int,
@@ -162,7 +174,7 @@ func send_score_once(
 
 	# HTTP通信開始
 	var request_error := http_request.request(
-		API_ORIGIN + path,
+		get_api_origin() + path,
 		headers,
 		HTTPClient.METHOD_POST,
 		body
@@ -196,7 +208,8 @@ func send_score_once(
 	if request_result != HTTPRequest.RESULT_SUCCESS:
 		return UnityroomRankingResponse.create_error(
 			"network_error",
-			"通信に失敗しました。ネットワーク接続を確認してください。",
+			"unityroomとの通信に失敗しました。（通信結果: %d）"
+			% request_result,
 			response_code
 		)
 
@@ -293,6 +306,20 @@ func get_api_error_message(
 		"unityroom APIでエラーが発生しました。（HTTP %d）"
 		% response_code
 	)
+
+static func get_api_origin() -> String:
+	# Web版ではゲームが配信されているHostへ送信
+	if OS.get_name() == "Web":
+		var hostname := str(
+			JavaScriptBridge.eval(
+				"window.location.hostname"
+			)
+		)
+
+		if not hostname.is_empty():
+			return "https://" + hostname
+
+	return API_ORIGIN
 
 func finish_request(
 	response: UnityroomRankingResponse

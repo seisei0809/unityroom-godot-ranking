@@ -15,7 +15,9 @@ res://addons/seisei/unityroom_godot_ranking/
 スコア送信は1行です。
 
 ```gdscript
-await $UnityroomRankingClient.send_score(1, 100.0)
+$UnityroomRankingClient.send_score(1, 100.0)
 ```
+
+送信完了まで待ちたい場合だけ `await` を付けます。
 
 詳しい使い方はリポジトリ直下の `README.md` を参照してください。
